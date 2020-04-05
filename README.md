@@ -1,3 +1,3 @@
-#Cribbage for Command Line
+# Cribbage for Command Line
 
-##An implementation of cribbage in C++ for use in command line interfaces
+## An implementation of cribbage in C++ for use in command line interfaces
