@@ -1,4 +1,4 @@
-TARGET=main
+TARGET=main.out
 OBJS=Deck.o Card.o main.o Player.o Board.o HumanPlayer.o ComputerPlayer.o
 CC=g++
 CPPFLAGS=-g
