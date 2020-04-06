@@ -1,4 +1,5 @@
 #include <string>
+#include <ncursesw/curses.h>
 #include "Card.h"
 using namespace std;
 
@@ -29,4 +30,17 @@ Card& Card::operator=(const Card& rhs) {
 	suit_ = rhs.suit_;
 
 	return *this;
+}
+
+/**
+ * Draws card in given window at given position
+ */
+void Card::displayCardAt(WINDOW * win, int x, int y) {
+	string space = " ";
+	if (this->toString().size() > 2) space = "";
+	mvwprintw(win, y+0, x, "+---+");
+	mvwprintw(win, y+1, x, "|%s%s|", this->toString().c_str(), space.c_str());
+	mvwprintw(win, y+2, x, "|   |");
+	mvwprintw(win, y+3, x, "|%s%s|", space.c_str(), this->toString().c_str());
+	mvwprintw(win, y+4, x, "+---+");
 }

@@ -11,15 +11,18 @@ class Player {
 		std::string name_;
 		std::vector<Card> hand_;
 		std::vector<Card> playHand_;
-		unsigned int position_;
+		int position_;
 	public:
 		Player(std::string name);
 		std::string name() { return name_; }
 		int position() { return position_; }
+		void setPosition(int pos);
 		std::vector<Card> hand() { return hand_; }
 		std::vector<Card> playHand() { return playHand_; }
 		void setPlayHand(std::vector<Card> cards);
 		bool isPlayHandEmpty();
+		void emptyHand();
+		void emptyPlayHand();
 		int advancePosition(int spaces);
 		Card getCardInHandAt(int index);
 		Card getCardInPlayHandAt(int index);

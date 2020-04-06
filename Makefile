@@ -1,12 +1,13 @@
 TARGET=main.out
 OBJS=Deck.o Card.o main.o Player.o Board.o HumanPlayer.o ComputerPlayer.o
+LIBS=-lncursesw
 CC=g++
 CPPFLAGS=-g
 
 all : $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CPPFLAGS) -o $(TARGET) $(OBJS)
+	$(CC) $(CPPFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 
 clean:
 	@rm -f $(OBJS) $(TARGET)

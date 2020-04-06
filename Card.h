@@ -3,6 +3,7 @@
 
 #include <string> 
 #include <map>
+#include <ncursesw/curses.h>
 class Card {
 	private: 
 		int value_;
@@ -26,6 +27,8 @@ class Card {
 		std::string toString() { return name_ + suit_; }
 		bool operator==(const Card& rhs) const;
 		Card& operator=(const Card& rhs);
+		// ncurses stuff
+		void displayCardAt(WINDOW * win, int x, int y);
 };
 
 #endif /* CARD_H */

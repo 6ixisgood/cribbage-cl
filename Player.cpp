@@ -5,9 +5,13 @@
 using namespace std;
 
 Player::Player(string name) : name_(name) {
-	//hand_.reserve(6);
-	//playHand_.reserve(4);
+	position_ = 0;
 }
+
+void Player::setPosition(int pos) { 
+	position_ = pos; 
+}
+
 
 int Player::advancePosition(int spaces) {
 	position_ += spaces;
@@ -52,13 +56,20 @@ bool Player::isPlayHandEmpty() {
 	return playHand_.empty();
 }
 
-
 void Player::removeFromPlayHand(Card c) {
 	std::vector<Card>::iterator i = std::find(playHand_.begin(), playHand_.end(), c);
 	if (i != playHand_.end()) {
 		playHand_.erase(i);
 	}
 
+}
+
+void Player::emptyHand() {
+	this->hand_.clear();
+}
+
+void Player::emptyPlayHand() {
+	this->playHand_.clear();
 }
 
 Card Player::getCardInHandAt(int index) {
