@@ -14,6 +14,7 @@ Board::Board() {
 	// set up the windows 
 	int max_x, max_y;
 	getmaxyx(stdscr, max_y, max_x);
+
 	playerWindow_ = newwin(PLAYER_WINDOW_HEIGHT, PLAYER_WINDOW_WIDTH, 
 		PLAYER_WINDOW_Y, PLAYER_WINDOW_X);
 	playWindow_ = newwin(PLAY_WINDOW_HEIGHT, PLAY_WINDOW_WIDTH, 
@@ -384,14 +385,61 @@ void Board::checkPlayCardsScoring(unsigned short int turn, int count) {
 		case 1:
 			break;
 		default:
-			if (playCards_[size-1].name().compare(playCards_[size-2].name()) == 0) {
-				// player scored 2 points for matching name
-				updateLogWindow(players_[turn]->name() + " scored 2 points for match");
-				players_[turn]->advancePosition(2);
-			} else if (playCards_[size-1].value() + playCards_[size-2].value() == 15) {
+			if (count == 15) {
 				//player scored 2 points for 15
 				updateLogWindow(players_[turn]->name() + " scored 2 points for 15");
 				players_[turn]->advancePosition(2);
+			}
+
+			// first check for combos of same rank
+			int same = 0;
+			int pos = size-1;
+			string rank = playCards_[pos].name();
+			while(pos--) {
+				if (playCards_[pos].name().compare(rank) == 0) {
+					same++;
+				} else {
+					break;
+				}
+			}
+			// add points if they got any
+			if (same > 0) {
+				same++;
+				updateLogWindow(players_[turn]->name() + " scored " + 
+					to_string(same) + " points for match");
+				players_[turn]->advancePosition(same);
+			}
+
+			// now check for straights
+			if (size >= 3) {
+				int posibilities = size - 2;
+				vector<Card> cards = playCards_;
+				while(posibilities--) {
+					// look at last posibilities+2 cards
+					// sort cards
+					vector<Card> sortedCards = cards;
+					sort(sortedCards.begin(), sortedCards.end());
+					// check order
+					int position = sortedCards.size()-1;
+					int highest = sortedCards[position].sortValue();
+					bool straight = true;
+					int i = 1;
+					for(position--; position>=0; i++, position--) {
+						if (sortedCards[position].sortValue() != highest-i) {
+							straight = false;
+							break;
+						}
+					}
+					if (straight) {
+						int length = i;
+						updateLogWindow(players_[turn]->name() + " scored " + 
+							to_string(length) + " for a straight");
+						players_[turn]->advancePosition(length);
+						break;
+					}
+					// remove first card 
+					cards.erase(cards.begin());
+				}
 			}
 			break;
 		//TODO work in runs of 3
@@ -405,10 +453,18 @@ void Board::checkPlayCardsScoring(unsigned short int turn, int count) {
 void Board::cutStarterCard() {
 	// get the starter
 	starter_ = deck_.dealOne();
+
+	// 2 points for dealer if jack
+	if (starter_.suit().compare("J") == 0) {
+		updateLogWindow(players_[dealer_]->name() + " scored 2 for his heels");
+		players_[dealer_]->advancePosition(2);
+	}
 	
 	// display it in the starter window
 	starter_.displayCardAt(starterWindow_, 0, 0);
 	wrefresh(starterWindow_);
+
+
 }
 
 void Board::countHandScores() {
@@ -583,9 +639,7 @@ void Board::combinationUtil(vector<vector<Card>> &combinations, vector<Card> car
 		// add combination to own vector
 		vector<Card> v(data, data + r);
 		// sort cards
-		sort(v.begin(), v.end(), [](const Card& a, const Card& b) -> bool {
-			return a.sortValue() > b.sortValue();		
-		});
+		sort(v.begin(), v.end());		
 		// add the vector to vector of all combinations
 		combinations.push_back(v);
 
@@ -643,6 +697,10 @@ void Board::updateScoreWindow() {
 void Board::updateLogWindow(string s) {
 	wprintw(logWindow_, "%s\n", s.c_str());
 	wrefresh(logWindow_);
+}
+
+bool sortValues(Card &a, Card &b) {
+	return a.sortValue() > b.sortValue();
 }
 
 void Board::checkWin() {

@@ -10,8 +10,12 @@
 #include "Card.h"
 #include "Deck.h"
 #include "Board.h"
+#include "bmp.h"
+#include "splash.xbm"
 
 using namespace std;
+
+void drawSplashScreen();
 
 int main(int argc, char** args) {
 	// set up ncurses
@@ -22,6 +26,12 @@ int main(int argc, char** args) {
 	curs_set(0);
 	start_color();
 
+	// show splash screen
+	drawSplashScreen();
+	getch();
+	clear();
+	refresh();
+
 	// Begin playing game
 	Board b;
 	b.startGame();
@@ -31,4 +41,28 @@ int main(int argc, char** args) {
 	sleep(10);
 	endwin();
 	return 0;
+}
+
+void drawSplashScreen() {
+	bitmap *b = xmpToBitmap(splash_width, splash_height, splash_bits);
+	init_pair(0, COLOR_RED, COLOR_BLACK);
+	init_pair(1, COLOR_BLACK, COLOR_RED);
+	for(int x = 0; x < b->width; x++) {
+		for (int y = 0; y < b->height; y++) {
+			if (b->data[x][y]) {
+				attron(COLOR_PAIR(0));
+				mvaddch(y, x, ' ');
+				attroff(COLOR_PAIR(0));
+			}
+			else {
+				attron(COLOR_PAIR(1));
+				mvaddch(y, x, ' ');
+				attroff(COLOR_PAIR(1));
+			}
+		}
+	}
+	attron(COLOR_PAIR(0));
+	mvprintw(12, 30, "Press Any Key To Start");
+	attroff(COLOR_PAIR(0));
+	refresh();
 }

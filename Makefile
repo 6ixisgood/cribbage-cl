@@ -1,5 +1,5 @@
 TARGET=main.out
-OBJS=Deck.o Card.o main.o Player.o Board.o HumanPlayer.o ComputerPlayer.o
+OBJS=Deck.o Card.o bmp.o main.o Player.o Board.o HumanPlayer.o ComputerPlayer.o
 LIBS=-lncursesw
 CC=g++
 CPPFLAGS=-g
@@ -24,5 +24,7 @@ HumanPlayer.o: $(@:.o=.c) Player.h HumanPlayer.h
 
 ComputerPlayer.o: $(@:.o=.c) Player.h ComputerPlayer.h
 
-main.o: $(@:.o=.c) Card.h Deck.h
+bmp.o: $(@:.o=.c) bmp.h
+
+main.o: $(@:.o=.c) Card.h Deck.h bmp.h
 

@@ -27,6 +27,7 @@ class Card {
 		std::string toString() { return name_ + suit_; }
 		bool operator==(const Card& rhs) const;
 		Card& operator=(const Card& rhs);
+		bool operator<(const Card& rhs) { return this->sortValue() < rhs.sortValue(); }
 		// ncurses stuff
 		void displayCardAt(WINDOW * win, int x, int y);
 };
