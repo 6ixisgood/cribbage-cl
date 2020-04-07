@@ -10,13 +10,19 @@
 
 using namespace std;
 
-Board::Board() {
+Board::Board(Player * p1, Player *p2) {
+	// create players 
+	
+	player1_ = p1;
+	player2_ = p2;
+	players_ = {player1_, player2_};
+
 	// set up the windows 
 	int max_x, max_y;
 	getmaxyx(stdscr, max_y, max_x);
 
-	playerWindow_ = newwin(PLAYER_WINDOW_HEIGHT, PLAYER_WINDOW_WIDTH, 
-		PLAYER_WINDOW_Y, PLAYER_WINDOW_X);
+	playerWindow_ = newwin(PLAYER1_WINDOW_HEIGHT, PLAYER1_WINDOW_WIDTH, 
+		PLAYER1_WINDOW_Y, PLAYER1_WINDOW_X);
 	playWindow_ = newwin(PLAY_WINDOW_HEIGHT, PLAY_WINDOW_WIDTH, 
 		PLAY_WINDOW_Y, PLAY_WINDOW_X);
 	starterWindow_ = newwin(STARTER_WINDOW_HEIGHT, STARTER_WINDOW_WIDTH, 
@@ -37,7 +43,7 @@ void Board::startGame() {
 	// create deck 
 	deck_ = Deck();
 	// set dealer
-	dealer_ = PLAYER;
+	dealer_ = PLAYER1;
 	// update helper window
 	this->displayHelpWindow();
 	gameNumber_ = 1;
@@ -46,8 +52,8 @@ void Board::startGame() {
 
 void Board::startRound() {
 	int winningScore = WINNING_SCORE_SHORT;
-	while (player_.position() < winningScore && 
-		computer_.position() < winningScore) {
+	while (player1_->position() < winningScore && 
+		player2_->position() < winningScore) {
 		// update scoring window
 		this->updateScoreWindow();
 		// reshuffle deck
@@ -78,32 +84,32 @@ void Board::startRound() {
 
 void Board::dealRound() {
 	// clear out player's hands and crib
-	player_.emptyHand();
-	player_.emptyPlayHand();
-	computer_.emptyHand();
-	computer_.emptyPlayHand();
+	player1_->emptyHand();
+	player1_->emptyPlayHand();
+	player2_->emptyHand();
+	player2_->emptyPlayHand();
 	crib_.clear();
 
 	// give 6 cards to each player
 	for (int i=1; i<=6; i++) {
 		assert(!deck_.isEmpty());
-		player_.addToHand(deck_.dealOne());
+		player1_->addToHand(deck_.dealOne());
 		assert(!deck_.isEmpty());
-		computer_.addToHand(deck_.dealOne());
+		player2_->addToHand(deck_.dealOne());
 	}
-	assert(player_.hand().size() == 6);
-	assert(computer_.hand().size() == 6);
+	assert(player1_->hand().size() == 6);
+	assert(player2_->hand().size() == 6);
 }
 
 void Board::initialDiscard() {
 	// have computer auto discard
-	auto computerDiscard = computer_.discardToCrib();
+	auto computerDiscard = player2_->discardToCrib();
 	// add cards to crib
 	crib_.push_back(get<0>(computerDiscard));
 	crib_.push_back(get<1>(computerDiscard));
 
 	// display all player cards and allow to choose which to discard
-	this->displayHand(playerWindow_, player_.hand());
+	this->displayHand(playerWindow_, player1_->hand());
 	int cursorPosition = 0;
 
 	// draw initial selection arrow
@@ -114,7 +120,7 @@ void Board::initialDiscard() {
 	// set up loop for card selection
 	int deleted = 0;
 	updateInfoWindow("Discard Cards (" + to_string(deleted) + "/2)");
-	int cardsLength = player_.hand().size();
+	int cardsLength = player1_->hand().size();
 
 	while (1) {
 		if (deleted < 2) {
@@ -149,13 +155,13 @@ void Board::initialDiscard() {
 				
 				case 'S':
 					// discard selected card
-					this->addToCrib(player_.hand()[cursorPosition]);
-					player_.removeFromHand(player_.hand()[cursorPosition]);
+					this->addToCrib(player1_->hand()[cursorPosition]);
+					player1_->removeFromHand(player1_->hand()[cursorPosition]);
 					deleted++;
 
 					// redisplay player's cards
 					wclear(playerWindow_);
-					this->displayHand(playerWindow_, player_.hand());
+					this->displayHand(playerWindow_, player1_->hand());
 
 					// check to make sure cursor is now in good position
 					if (cursorPosition == cardsLength-deleted) {
@@ -181,14 +187,14 @@ void Board::initialDiscard() {
 
 void Board::startPlay() {
 	// copy remaining cards to "playHand"
-	player_.setPlayHand(player_.hand());
-	computer_.setPlayHand(computer_.hand());
+	player1_->setPlayHand(player1_->hand());
+	player2_->setPlayHand(player2_->hand());
 	int turn = dealer_^1;
 	int count = 1;
 	// update info window 2 status
 	updateInfoWindow2("The Play");
 	// keep playing until all cards are gone
-	while (!player_.isPlayHandEmpty() || !computer_.isPlayHandEmpty()) {
+	while (!player1_->isPlayHandEmpty() || !player2_->isPlayHandEmpty()) {
 		updateLogWindow("Starting round " + to_string(count));
 		
 		// clear out play area
@@ -223,7 +229,7 @@ void Board::startPlay() {
 int Board::playRound(unsigned short int turn) {
 	updateInfoWindow("Select a card to play");
 	// display all player cards and allow to choose which to play
-	this->displayHand(playerWindow_, player_.playHand());
+	this->displayHand(playerWindow_, player1_->playHand());
 
 	// draw initial selection arrow
 	cur_y_ = CARD_HEIGHT;
@@ -245,7 +251,7 @@ int Board::playRound(unsigned short int turn) {
 		// default "GO" card
 		Card c = Card(0, "GO", "");
 		// if it's the computer's turn just let it go
-		if (turn == COMPUTER && !players_[turn]->isPlayHandEmpty()) {
+		if (turn == PLAYER2 && !players_[turn]->isPlayHandEmpty()) {
 			c = players_[turn]->playCard(count);
 		} else if (!players_[turn]->isPlayHandEmpty()){
 			// for player's turn let them see their cards and select which one to use
@@ -263,8 +269,8 @@ int Board::playRound(unsigned short int turn) {
 									cur_x_ -= CARD_WIDTH+1;
 									cursorPosition -= 1;
 									if (cur_x_ < 0) {
-										cur_x_ = (int) (CARD_WIDTH/2) + (CARD_WIDTH+1) * (player_.playHand().size()-1);
-										cursorPosition = player_.playHand().size()-1;
+										cur_x_ = (int) (CARD_WIDTH/2) + (CARD_WIDTH+1) * (player1_->playHand().size()-1);
+										cursorPosition = player1_->playHand().size()-1;
 									}
 									mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
 									break;
@@ -273,7 +279,7 @@ int Board::playRound(unsigned short int turn) {
 									mvwaddch(playerWindow_, cur_y_, cur_x_, ' ');
 									cur_x_ += CARD_WIDTH+1;
 									cursorPosition += 1;
-									if (cur_x_ > 2 + (CARD_WIDTH+1) * (player_.playHand().size()-1)) {
+									if (cur_x_ > 2 + (CARD_WIDTH+1) * (player1_->playHand().size()-1)) {
 										cur_x_ = (int) (CARD_WIDTH/2);
 										cursorPosition = 0;
 									}
@@ -284,7 +290,7 @@ int Board::playRound(unsigned short int turn) {
 						
 						case 'S':
 							// save card selected
-							c = player_.playHand()[cursorPosition];	
+							c = player1_->playHand()[cursorPosition];	
 
 							// check if legal play
 							if (c.value()+count > MAX_ROUND_SCORE) {
@@ -292,11 +298,11 @@ int Board::playRound(unsigned short int turn) {
 								break;
 							}
 
-							player_.removeFromPlayHand(player_.playHand()[cursorPosition]);
+							player1_->removeFromPlayHand(player1_->playHand()[cursorPosition]);
 
 							// redisplay player's cards
 							wclear(playerWindow_);
-							this->displayHand(playerWindow_, player_.playHand());
+							this->displayHand(playerWindow_, player1_->playHand());
 							wrefresh(playerWindow_);
 
 							// place selection cursor back to begining 
@@ -310,7 +316,7 @@ int Board::playRound(unsigned short int turn) {
 						case 'G': {
 							// player says "GO"
 							// make sure that the player doesn't have any more cards to play
-							vector<Card> hand = player_.playHand();
+							vector<Card> hand = player1_->playHand();
 							int pointsLeft = MAX_ROUND_SCORE - count;
 							bool canPlay = false;
 							for (vector<Card>::iterator it = hand.begin(); it != hand.end(); ++it) {
@@ -347,12 +353,12 @@ int Board::playRound(unsigned short int turn) {
 
 
 			// display card played
-			int disp_x = PLAY_WINDOW_PLAYER_X;
-			if (turn == COMPUTER) disp_x = PLAY_WINDOW_COMPUTER_X;
+			int disp_x = PLAY_WINDOW_PLAYER1_X;
+			if (turn == PLAYER2) disp_x = PLAY_WINDOW_PLAYER2_X;
 			c.displayCardAt(playWindow_, disp_x, 0);
 			// display current count
 			mvwprintw(playWindow_, CARD_HEIGHT,
-				PLAY_WINDOW_PLAYER_X-3, "%d", count);
+				PLAY_WINDOW_PLAYER1_X-3, "%d", count);
 			wrefresh(playWindow_);
 
 			// check for scoring on play
@@ -394,9 +400,9 @@ void Board::checkPlayCardsScoring(unsigned short int turn, int count) {
 			// first check for combos of same rank
 			int same = 0;
 			int pos = size-1;
-			string rank = playCards_[pos].name();
+			string rank = playCards_[pos].rank();
 			while(pos--) {
-				if (playCards_[pos].name().compare(rank) == 0) {
+				if (playCards_[pos].rank().compare(rank) == 0) {
 					same++;
 				} else {
 					break;
@@ -424,14 +430,14 @@ void Board::checkPlayCardsScoring(unsigned short int turn, int count) {
 					int highest = sortedCards[position].sortValue();
 					bool straight = true;
 					int i = 1;
-					for(position--; position>=0; i++, position--) {
+					for(position--; position>0; i++, position--) {
 						if (sortedCards[position].sortValue() != highest-i) {
 							straight = false;
 							break;
 						}
 					}
 					if (straight) {
-						int length = i;
+						int length = i + 1;
 						updateLogWindow(players_[turn]->name() + " scored " + 
 							to_string(length) + " for a straight");
 						players_[turn]->advancePosition(length);
@@ -469,22 +475,22 @@ void Board::cutStarterCard() {
 
 void Board::countHandScores() {
 	// display the player's hand and computer's hand and update scores 
-	this->displayHand(playerWindow_, player_.hand());
-	this->displayHand(playWindow_, computer_.hand());
+	this->displayHand(playerWindow_, player1_->hand());
+	this->displayHand(playWindow_, player2_->hand());
 	// refresh windows
 	wrefresh(playerWindow_);
 	wrefresh(playWindow_);
 
 	// calculate scores
 	int scores[2];
-	scores[PLAYER] = getHandScore(player_.hand(), player_.name());
-	scores[COMPUTER] = getHandScore(computer_.hand(), computer_.name());
+	scores[PLAYER1] = getHandScore(player1_->hand(), player1_->name());
+	scores[PLAYER2] = getHandScore(player2_->hand(), player2_->name());
 
 	// update the info windows so you can see the scores no matter the order
-	updateInfoWindow(player_.name() + "'s hand scored " + 
-		to_string(scores[PLAYER]));
-	updateInfoWindow2(computer_.name() + "'s hand scored " + 
-		to_string(scores[COMPUTER]));
+	updateInfoWindow(player1_->name() + "'s hand scored " + 
+		to_string(scores[PLAYER1]));
+	updateInfoWindow2(player2_->name() + "'s hand scored " + 
+		to_string(scores[PLAYER2]));
 	
 	// add score of non-dealer first and see if they won
 	players_[dealer_^1]->advancePosition(scores[dealer_^1]);
@@ -524,7 +530,7 @@ void Board::countHandScores() {
 	// display the crib and get score
 	this->displayHand(playerWindow_, crib_);
 	wrefresh(playerWindow_);
-	int cribHand = getHandScore(crib_, "crib");
+	int cribHand = getHandScore(crib_, CRIB);
 
 	// add the crib's points to the dealer's
 	updateInfoWindow(players_[dealer_]->name() + "'s crib scored " + to_string(cribHand));
@@ -563,9 +569,11 @@ int Board::getHandScore(vector<Card> cards, string playerName) {
 	}
 	
 	// loop through all permutations and look for scoring
-	cout << "Scoring for " << playerName << ":\n";
 	int score = 0;
-	for (vector<vector<Card>>::iterator it = allCombos.begin(); it != allCombos.end(); ++it) {
+	// handle 5 card flush case
+	bool fiveCardFlush = false;
+	// go in reverse to get 5 card first
+	for (vector<vector<Card>>::reverse_iterator it = allCombos.rbegin(); it != allCombos.rend(); ++it) {
 		vector<Card> comb = (*it);
 		int length = comb.size();
 		// check for 15
@@ -579,20 +587,20 @@ int Board::getHandScore(vector<Card> cards, string playerName) {
 		// check for nobs
 		if (length == 1) {
 			Card c = comb[0];
-			if ((c.name().compare("J") == 0) && (c.suit().compare(starter_.suit()) == 0)) {
+			if ((c.rank().compare("J") == 0) && (c.suit().compare(starter_.suit()) == 0)) {
 				//cout << "nobs for 1\n";
 				score += 1;
 			}
 		}
 
 		// check for pair
-		if (length == 2 && comb[0].name().compare(comb[1].name()) == 0) {
+		if (length == 2 && comb[0].rank().compare(comb[1].rank()) == 0) {
 			//cout << "two of a kind for 2\n";
 			score +=2;
 		}
 
 		// check for runs
-		if (length == 3) {
+		if (length >= 3) {
 			bool straight = true;
 			Card last = comb[comb.size()-1];
 			int i=comb.size()-1;
@@ -605,26 +613,40 @@ int Board::getHandScore(vector<Card> cards, string playerName) {
 			}
 			if (straight) {
 				//cout << "straight for 3\n";
-				score +=3;
+				score += length;
 			}
 		}
 
 		// check for flush
 		if (length >= 4) {
-			bool flush = true;
-			string suit = comb[0].suit();
-			int i = comb.size();
-			while (i--) {
-				if (comb[i].suit() != suit) {
-					flush = false;
-					break;
+			bool flush = false;
+			if (length == 5) {
+				flush = true;
+				string suit = comb[0].suit();
+				int i = length;
+				while (i--) {
+					if (comb[i].suit() != suit) {
+						flush = false;
+						break;
+					}
 				}
-			}
-			if (flush) {
-				//cout << "flush for " << comb.size() << "\n" ;
-				score += comb.size();
+				fiveCardFlush = flush;
+			} else if (playerName.compare(CRIB) && !(fiveCardFlush)){
+				// 4 card flush can't be in crib
+				flush = true;
+				string suit = comb[0].suit();
+				int i = length;
+				while (i--) {
+					// if starter is in here, it doesn't count
+					if (comb[i].suit() != suit ||
+						comb[i] == starter_) {
+						flush = false;
+						break;
+					}
+				}
 
 			}
+			if (flush) score += length;
 		}
 	
 	}
@@ -690,7 +712,7 @@ void Board::emptyCrib() {
 void Board::updateScoreWindow() {
 	wclear(scoreWindow_);
 	wprintw(scoreWindow_, "Game: %d\nPlayer: %d\nComputer: %d", 
-		gameNumber_, player_.position(), computer_.position());
+		gameNumber_, player1_->position(), player2_->position());
 	wrefresh(scoreWindow_);
 }
 
@@ -706,11 +728,11 @@ bool sortValues(Card &a, Card &b) {
 void Board::checkWin() {
 	bool win = false;
 
-	if (player_.position() >= WINNING_SCORE_LONG) {
-		updateLogWindow(player_.name() + " won!");
+	if (player1_->position() >= WINNING_SCORE_LONG) {
+		updateLogWindow(player1_->name() + " won!");
 		win = true;
-	} else if (computer_.position() >= WINNING_SCORE_LONG) {
-		updateLogWindow(computer_.name() + " won!");
+	} else if (player2_->position() >= WINNING_SCORE_LONG) {
+		updateLogWindow(player2_->name() + " won!");
 		win = true;
 	}
 

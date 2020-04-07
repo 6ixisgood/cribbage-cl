@@ -5,24 +5,24 @@
 #define INFO_WINDOW_Y 0
 #define INFO_WINDOW_HEIGHT 1
 #define INFO_WINDOW_WIDTH 35
-#define PLAYER_WINDOW_X 2
-#define PLAYER_WINDOW_Y 1
-#define PLAYER_WINDOW_WIDTH INFO_WINDOW_WIDTH
-#define PLAYER_WINDOW_HEIGHT 7
+#define PLAYER1_WINDOW_X 2
+#define PLAYER1_WINDOW_Y 1
+#define PLAYER1_WINDOW_WIDTH INFO_WINDOW_WIDTH
+#define PLAYER1_WINDOW_HEIGHT 7
 #define INFO_WINDOW2_X INFO_WINDOW_X
-#define INFO_WINDOW2_Y PLAYER_WINDOW_Y+PLAYER_WINDOW_HEIGHT
+#define INFO_WINDOW2_Y PLAYER1_WINDOW_Y+PLAYER1_WINDOW_HEIGHT
 #define INFO_WINDOW2_HEIGHT INFO_WINDOW_HEIGHT
 #define INFO_WINDOW2_WIDTH INFO_WINDOW_WIDTH
 #define PLAY_WINDOW_X 2
-#define PLAY_WINDOW_Y PLAYER_WINDOW_Y+PLAYER_WINDOW_HEIGHT+1
-#define PLAY_WINDOW_WIDTH PLAYER_WINDOW_WIDTH
-#define PLAY_WINDOW_HEIGHT PLAYER_WINDOW_HEIGHT
-#define PLAY_WINDOW_COMPUTER_X 1
-#define PLAY_WINDOW_PLAYER_X 10
-#define STARTER_WINDOW_X PLAYER_WINDOW_WIDTH+PLAYER_WINDOW_X+2
-#define STARTER_WINDOW_Y PLAYER_WINDOW_Y
+#define PLAY_WINDOW_Y PLAYER1_WINDOW_Y+PLAYER1_WINDOW_HEIGHT+1
+#define PLAY_WINDOW_WIDTH PLAYER1_WINDOW_WIDTH
+#define PLAY_WINDOW_HEIGHT PLAYER1_WINDOW_HEIGHT
+#define PLAY_WINDOW_PLAYER2_X 1
+#define PLAY_WINDOW_PLAYER1_X 10
+#define STARTER_WINDOW_X PLAYER1_WINDOW_WIDTH+PLAYER1_WINDOW_X+2
+#define STARTER_WINDOW_Y PLAYER1_WINDOW_Y
 #define STARTER_WINDOW_WIDTH 10
-#define STARTER_WINDOW_HEIGHT PLAYER_WINDOW_HEIGHT
+#define STARTER_WINDOW_HEIGHT PLAYER1_WINDOW_HEIGHT
 #define LOG_WINDOW_X STARTER_WINDOW_X
 #define LOG_WINDOW_Y PLAY_WINDOW_Y
 #define LOG_WINDOW_WIDTH 35
@@ -37,9 +37,10 @@
 #define MAX_ROUND_SCORE 31
 #define CARD_WIDTH 5
 #define CARD_HEIGHT 5
-#define PLAYER 0
-#define COMPUTER 1
+#define PLAYER1 0
+#define PLAYER2 1
 #define CURSOR '^'
+#define CRIB "CRIB"
 
 #include <string>
 #include <vector>
@@ -52,9 +53,9 @@
 class Board {
 	private: 
 		// players
-		HumanPlayer player_ = HumanPlayer("Human");
-		ComputerPlayer computer_ = ComputerPlayer("Computer");
-		Player *players_[2] = { &player_, &computer_};
+		Player * player1_;
+		Player * player2_;
+		std::vector<Player*> players_;
 		std::vector<Card> playCards_;	// the cards in the "play" pile
 		Card starter_;	// the starter card
 		Deck deck_;	// the deck used
@@ -71,7 +72,7 @@ class Board {
 		WINDOW * helpWindow_;	// window with what each key does
 		WINDOW * logWindow_;	// window displays logs of what is going on in the game 
 	public:
-		Board();
+		Board(Player * p1, Player * p2);
 		void startGame();
 		void startRound();
 		void dealRound();

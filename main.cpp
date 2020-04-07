@@ -32,8 +32,11 @@ int main(int argc, char** args) {
 	clear();
 	refresh();
 
+	// create players
+	HumanPlayer p1 = HumanPlayer("You");
+	ComputerPlayer p2 = ComputerPlayer("Computer");
 	// Begin playing game
-	Board b;
+	Board b = Board(&p1, &p2);
 	b.startGame();
 	b.startRound();
 
