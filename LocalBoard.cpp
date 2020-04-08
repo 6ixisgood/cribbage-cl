@@ -26,20 +26,6 @@ void LocalBoard::dealRound() {
 	assert(player2_->hand().size() == 6);
 }
 
-/** 
- * Have the computer auto discard the first 2 cards it got
-*/
-void LocalBoard::player2InitialDiscard() {
-    // have computer auto discard
-	auto computerDiscard = player2_->discardToCrib();
-	// add cards to crib
-	crib_.push_back(get<0>(computerDiscard));
-	crib_.push_back(get<1>(computerDiscard));
-}
-
-Card LocalBoard::player2PlayCard(int count) {
-    return player2_->playCard(count);
-}
 
 void LocalBoard::cutStarterCard() {
 	// get the starter
@@ -54,9 +40,4 @@ void LocalBoard::cutStarterCard() {
 	// display it in the starter window
 	starter_.displayCardAt(starterWindow_, 0, 0);
 	wrefresh(starterWindow_);
-}
-
-void LocalBoard::displayPlayer2Hand() {
-    this->displayHand(playWindow_, player2_->hand());
-    wrefresh(playWindow_);
 }

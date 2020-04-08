@@ -80,6 +80,20 @@ Card Player::getCardInPlayHandAt(int index) {
 	return playHand_[index];
 }
 
+void Player::setPlayerWindow(WINDOW * win) {
+	this->playerWindow_ = win;
+}
+
+void Player::displayHand(vector<Card> cards) {
+	wclear(playerWindow_);
+	int x = 0;
+	for(vector<Card>::iterator it = cards.begin(); it != cards.end(); ++it, x+=CARD_WIDTH+1) {
+		Card c = (*it);
+		c.displayCardAt(playerWindow_, x, 0);
+	}
+	wrefresh(playerWindow_);
+}
+
  
 
 

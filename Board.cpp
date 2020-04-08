@@ -21,22 +21,27 @@ Board::Board(Player * p1, Player *p2) {
 	int max_x, max_y;
 	getmaxyx(stdscr, max_y, max_x);
 
-	playerWindow_ = newwin(PLAYER1_WINDOW_HEIGHT, PLAYER1_WINDOW_WIDTH, 
+	player1Window_ = newwin(PLAYER1_WINDOW_HEIGHT, PLAYER1_WINDOW_WIDTH, 
 		PLAYER1_WINDOW_Y, PLAYER1_WINDOW_X);
 	playWindow_ = newwin(PLAY_WINDOW_HEIGHT, PLAY_WINDOW_WIDTH, 
 		PLAY_WINDOW_Y, PLAY_WINDOW_X);
+	player2Window_ = newwin(PLAYER2_WINDOW_HEIGHT, PLAYER2_WINDOW_WIDTH,
+		PLAYER2_WINDOW_Y, PLAYER2_WINDOW_X);
 	starterWindow_ = newwin(STARTER_WINDOW_HEIGHT, STARTER_WINDOW_WIDTH, 
 		STARTER_WINDOW_Y, STARTER_WINDOW_X);
-	infoWindow_ = newwin(INFO_WINDOW_HEIGHT, INFO_WINDOW_WIDTH,
-		INFO_WINDOW_Y, INFO_WINDOW_X);
-	infoWindow2_ = newwin(INFO_WINDOW2_HEIGHT, INFO_WINDOW2_WIDTH,
-		INFO_WINDOW2_Y, INFO_WINDOW2_X);
+	player1InfoWindow_ = newwin(PLAYER1_INFO_WINDOW_HEIGHT, PLAYER1_INFO_WINDOW_WIDTH,
+		PLAYER1_INFO_WINDOW_Y, PLAYER1_INFO_WINDOW_X);
+	player2InfoWindow_ = newwin(PLAYER2_INFO_WINDOW_HEIGHT, PLAYER2_INFO_WINDOW_WIDTH,
+		PLAYER2_INFO_WINDOW_Y, PLAYER2_INFO_WINDOW_X);
 	logWindow_ = newwin(LOG_WINDOW_HEIGHT, LOG_WINDOW_WIDTH,
 		LOG_WINDOW_Y, LOG_WINDOW_X);
 	scrollok(logWindow_, true);
 	scoreWindow_ = newwin(SCORE_WINDOW_HEIGHT, SCORE_WINDOW_WIDTH,
 		SCORE_WINDOW_Y, SCORE_WINDOW_X);
 	helpWindow_ = newwin(1, max_x, max_y-1, 0);
+
+	player1_->setPlayerWindow(player1Window_);
+	player2_->setPlayerWindow(player2Window_);
 }
 
 void Board::startGame() {
@@ -74,8 +79,8 @@ void Board::startRound() {
 		// switch dealer
 		dealer_ = dealer_^1;
 		// clear everything that could have cards
-		wclear(playerWindow_);
-		wrefresh(playerWindow_);
+		wclear(player1Window_);
+		wrefresh(player1Window_);
 		wclear(starterWindow_);
 		wrefresh(starterWindow_);
 	}
@@ -84,94 +89,35 @@ void Board::startRound() {
 
 
 void Board::initialDiscard() {
-	// display all player cards and allow to choose which to discard
-	this->displayHand(playerWindow_, player1_->hand());
-	int cursorPosition = 0;
+	// display blanks for p2
+	// display blank cards
+	Card b = Card(0, " ", " ");
+	vector<Card> blanks {b, b, b, b, b, b};
+	player2_->displayHand(blanks);
+	// ask each player to discard 2 cards
+	vector<Card> p1Discard = players_[0]->discardCards();
+	vector<Card> p2Discard = players_[1]->discardCards();
+	
+	// check lenghts
+	assert(p1Discard.size() == 2);
+	assert(p2Discard.size() == 2);
 
-	// draw initial selection arrow
-	cur_y_ = CARD_HEIGHT;
-	cur_x_ = (int) (CARD_WIDTH/2);
-	mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
+	// add each to crib
+	crib_.push_back(p1Discard[0]);
+	crib_.push_back(p1Discard[1]);
+	crib_.push_back(p2Discard[0]);
+	crib_.push_back(p2Discard[1]);
 
-	// set up loop for card selection
-	int deleted = 0;
-	updateInfoWindow("Discard Cards (" + to_string(deleted) + "/2)");
-	int cardsLength = player1_->hand().size();
-
-	while (1) {
-		if (deleted < 2) {
-			switch(toupper(wgetch(playerWindow_))) {
-				case '\033':
-					getch();
-					switch(getchar()) {
-						case 'D':
-							// arrow left
-							mvwaddch(playerWindow_, cur_y_, cur_x_, ' ');
-							cur_x_ -= CARD_WIDTH+1;
-							cursorPosition -= 1;
-							if (cur_x_ < 0) {
-								cur_x_ = (int) (CARD_WIDTH/2) + (CARD_WIDTH+1) * (cardsLength-deleted-1);
-								cursorPosition = cardsLength-deleted-1;
-							}
-							mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
-							break;
-						case 'C':
-							// arrow right
-							mvwaddch(playerWindow_, cur_y_, cur_x_, ' ');
-							cur_x_ += CARD_WIDTH+1;
-							cursorPosition += 1;
-							if (cur_x_ > 2 + (CARD_WIDTH+1) * (cardsLength-deleted-1)) {
-								cur_x_ = (int) (CARD_WIDTH/2);
-								cursorPosition = 0;
-							}
-							mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
-							break;
-					}
-					break;
-				
-				case 'S':
-					// discard selected card
-					this->addToCrib(player1_->hand()[cursorPosition]);
-					player1_->removeFromHand(player1_->hand()[cursorPosition]);
-					deleted++;
-
-					// redisplay player's cards
-					wclear(playerWindow_);
-					this->displayHand(playerWindow_, player1_->hand());
-
-					// check to make sure cursor is now in good position
-					if (cursorPosition == cardsLength-deleted) {
-						cur_x_ -= CARD_WIDTH+1;
-						cursorPosition--;
-					}
-					mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
-					wrefresh(playerWindow_);
-
-
-					// update info bar 
-					updateInfoWindow("Discard Cards (" + to_string(deleted) + "/2)");
-					break;
-				case 'Q':
-					break;
-			}
-		} else {
-			// leave selection loop
-			break;
-		}
-	}
-
-	// have player 2 discard their cards
-	this->player2InitialDiscard();
 }
 
 void Board::startPlay() {
 	// copy remaining cards to "playHand"
+	// both player's cards should be updated now
 	player1_->setPlayHand(player1_->hand());
 	player2_->setPlayHand(player2_->hand());
 	int turn = dealer_^1;
 	int count = 1;
-	// update info window 2 status
-	updateInfoWindow2("The Play");
+
 	// keep playing until all cards are gone
 	while (!player1_->isPlayHandEmpty() || !player2_->isPlayHandEmpty()) {
 		updateLogWindow("Starting round " + to_string(count));
@@ -180,14 +126,16 @@ void Board::startPlay() {
 		playCards_.clear();
 		wclear(playWindow_);
 		wrefresh(playWindow_);
-
+		
 		int next = this->playRound(turn);
 		turn = next;
 		count++;
 	}
 	// clear the windows
 	wclear(playWindow_);
-	wclear(playerWindow_);
+	wclear(player1Window_);
+	wrefresh(playWindow_);
+	wrefresh(player1Window_);
 
 	// wait for input
 	bool input = false;
@@ -206,18 +154,17 @@ void Board::startPlay() {
 }
 
 int Board::playRound(unsigned short int turn) {
-	updateInfoWindow("Select a card to play");
+	updatePlayer1InfoWindow("Select a card to play");
 	// display all player cards and allow to choose which to play
-	this->displayHand(playerWindow_, player1_->playHand());
+	player1_->displayHand(player1_->playHand());
+	// display all blanks for player2
+	Card b = Card(0, " ", " ");
+	vector<Card> blanks {b, b, b, b};
 
-	// draw initial selection arrow
-	cur_y_ = CARD_HEIGHT;
-	cur_x_ = (int) (CARD_WIDTH/2);
-	mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
 
 	bool go[2] = { false, false };
 	int count = 0;
-	while (count <MAX_ROUND_SCORE) {
+	while (count < MAX_ROUND_SCORE) {
 		// check to see if both players have said "GO"
 		if (go[0] && go[1]) {
 			break;
@@ -227,102 +174,10 @@ int Board::playRound(unsigned short int turn) {
 			turn = turn^1;
 			continue;
 		}
-		// default "GO" card
-		Card c = Card(0, "GO", "");
 
-		// let player 2 go if it's their turn
-		if (turn == PLAYER2) { //&& !players_[turn]->isPlayHandEmpty()) {
-			c = player2PlayCard(count);
-		} else if (!players_[turn]->isPlayHandEmpty()){
-			// for player's turn let them see their cards and select which one to use
-			bool removed = false;
-			int cursorPosition = 0;
-			while (1) {
-				if (!removed) {
-					switch(toupper(wgetch(playerWindow_))) {
-						case '\033':
-							getch();
-							switch(getchar()) {
-								case 'D':
-									// arrow left
-									mvwaddch(playerWindow_, cur_y_, cur_x_, ' ');
-									cur_x_ -= CARD_WIDTH+1;
-									cursorPosition -= 1;
-									if (cur_x_ < 0) {
-										cur_x_ = (int) (CARD_WIDTH/2) + (CARD_WIDTH+1) * (player1_->playHand().size()-1);
-										cursorPosition = player1_->playHand().size()-1;
-									}
-									mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
-									break;
-								case 'C':
-									// arrow right
-									mvwaddch(playerWindow_, cur_y_, cur_x_, ' ');
-									cur_x_ += CARD_WIDTH+1;
-									cursorPosition += 1;
-									if (cur_x_ > 2 + (CARD_WIDTH+1) * (player1_->playHand().size()-1)) {
-										cur_x_ = (int) (CARD_WIDTH/2);
-										cursorPosition = 0;
-									}
-									mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
-									break;
-							}
-							break;
-						
-						case 'S':
-							// save card selected
-							c = player1_->playHand()[cursorPosition];	
+		// player plays their card
+		Card c = players_[turn]->playCard(count, MAX_ROUND_SCORE);
 
-							// check if legal play
-							if (c.value()+count > MAX_ROUND_SCORE) {
-								updateInfoWindow("Can't play that card");
-								break;
-							}
-
-							player1_->removeFromPlayHand(player1_->playHand()[cursorPosition]);
-
-							// redisplay player's cards
-							wclear(playerWindow_);
-							this->displayHand(playerWindow_, player1_->playHand());
-							wrefresh(playerWindow_);
-
-							// place selection cursor back to begining 
-							cur_x_ = (int) (CARD_WIDTH/2);
-							mvwaddch(playerWindow_, cur_y_, cur_x_, CURSOR);
-							cursorPosition = 0;
-
-							// get out of loop
-							removed = true;
-							break;
-						case 'G': {
-							// player says "GO"
-							// make sure that the player doesn't have any more cards to play
-							vector<Card> hand = player1_->playHand();
-							int pointsLeft = MAX_ROUND_SCORE - count;
-							bool canPlay = false;
-							for (vector<Card>::iterator it = hand.begin(); it != hand.end(); ++it) {
-								if ((*it).value() <= pointsLeft) {
-									canPlay = true;
-									break;
-								}
-							}
-							if (canPlay) {
-								updateInfoWindow("You must play a card");
-							} else {
-								removed = true;
-							}
-							break;
-						}
-						default:
-							break;
-					}
-				} else {
-					// leave selection loop
-					break;
-				}
-			}
-		}
-
-		// remove card from player playHand and add to board playCards
 		if (c.value() > 0) {
 			updateLogWindow(players_[turn]->name() + " Played " + c.toString());
 			// add card to vector of cards played this round
@@ -330,7 +185,6 @@ int Board::playRound(unsigned short int turn) {
 
 			// add value to total count
 			count += c.value();
-
 
 			// display card played
 			int disp_x = PLAY_WINDOW_PLAYER1_X;
@@ -438,21 +292,18 @@ void Board::checkPlayCardsScoring(unsigned short int turn, int count) {
 
 void Board::countHandScores() {
 	// display the player 1 hand  
-	this->displayHand(playerWindow_, player1_->hand());
-	// refresh window
-	wrefresh(playerWindow_);
+	player1_->displayHand(player1_->hand());
 	// display player 2's hand
-	this->displayPlayer2Hand();
-
+	player2_->displayHand(player2_->hand());
 	// calculate scores locally
 	int scores[2];
 	scores[PLAYER1] = getHandScore(player1_->hand(), player1_->name());
 	scores[PLAYER2] = getHandScore(player2_->hand(), player2_->name());
 
 	// update the info windows so you can see the scores no matter the order
-	updateInfoWindow(player1_->name() + "'s hand scored " + 
+	updatePlayer1InfoWindow(player1_->name() + "'s hand scored " + 
 		to_string(scores[PLAYER1]));
-	updateInfoWindow2(player2_->name() + "'s hand scored " + 
+	updatePlayer2InfoWindow(player2_->name() + "'s hand scored " + 
 		to_string(scores[PLAYER2]));
 	
 	// add score of non-dealer first and see if they won, locally
@@ -485,18 +336,22 @@ void Board::countHandScores() {
 	}
 
 	// clear the player's and computer's hand
-	wclear(playerWindow_);
+	wclear(player1Window_);
 	wclear(playWindow_);
 	wrefresh(playWindow_);
-	wclear(infoWindow2_);
-	wrefresh(infoWindow2_);
+	wclear(player2InfoWindow_);
+	wrefresh(player2InfoWindow_);
 	// display the crib and get score
-	this->displayHand(playerWindow_, crib_);
-	wrefresh(playerWindow_);
+	players_[dealer_]->displayHand(crib_);
+	wrefresh(player1Window_);
 	int cribHand = getHandScore(crib_, CRIB);
 
 	// add the crib's points to the dealer's
-	updateInfoWindow(players_[dealer_]->name() + "'s crib scored " + to_string(cribHand));
+	if (dealer_ == PLAYER1) {
+		updatePlayer1InfoWindow(players_[dealer_]->name() + "'s crib scored " + to_string(cribHand));
+	} else {
+		updatePlayer2InfoWindow(players_[dealer_]->name() + "'s crib scored " + to_string(cribHand));
+	}
 	updateLogWindow(players_[dealer_]->name() + "'s crib scored " + to_string(cribHand));
 	players_[dealer_]->advancePosition(cribHand);
 	updateScoreWindow();
@@ -637,35 +492,22 @@ void Board::combinationUtil(vector<vector<Card>> &combinations, vector<Card> car
 	}
 }
 
-void Board::displayHand(WINDOW *win, vector<Card> cards) {
-	wclear(win);
-	int x = 0;
-	for(vector<Card>::iterator it = cards.begin(); it != cards.end(); ++it, x+=CARD_WIDTH+1) {
-		Card c = (*it);
-		c.displayCardAt(win, x, 0);
-	}
-}
-
 void Board::displayHelpWindow() {
 	wattron(helpWindow_, COLOR_WHITE | A_BOLD);
 	wprintw(helpWindow_, "<S> Select Card, <G> Go/Advance");
 	wrefresh(helpWindow_);
 }
 
-void Board::updateInfoWindow(string s) {
-	wclear(infoWindow_);
-	mvwprintw(infoWindow_, 0, 0, "%s", s.c_str());
-	wrefresh(infoWindow_);
+void Board::updatePlayer1InfoWindow(string s) {
+	wclear(player1InfoWindow_);
+	mvwprintw(player1InfoWindow_, 0, 0, "%s", s.c_str());
+	wrefresh(player1InfoWindow_);
 }
 
-void Board::updateInfoWindow2(string s) {
-	wclear(infoWindow2_);
-	mvwprintw(infoWindow2_, 0, 0, "%s", s.c_str());
-	wrefresh(infoWindow2_);
-}
-
-void Board::addToCrib(Card c) {
-	crib_.insert(crib_.begin(), c);
+void Board::updatePlayer2InfoWindow(string s) {
+	wclear(player2InfoWindow_);
+	mvwprintw(player2InfoWindow_, 0, 0, "%s", s.c_str());
+	wrefresh(player2InfoWindow_);
 }
 
 void Board::emptyCrib() {
@@ -700,13 +542,13 @@ void Board::checkWin() {
 	}
 
 	if (win) {
-		wclear(playerWindow_);
-		wrefresh(playerWindow_);
+		wclear(player1Window_);
+		wrefresh(player1Window_);
 		wclear(playWindow_);
 		wrefresh(playWindow_);
-		wclear(infoWindow2_);
-		wrefresh(infoWindow2_);
-		updateInfoWindow("GAME OVER!");
+		wclear(player2InfoWindow_);
+		wrefresh(player2InfoWindow_);
+		updatePlayer1InfoWindow("GAME OVER!");
 
 		getch();
 		endwin();

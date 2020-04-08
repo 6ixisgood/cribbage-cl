@@ -7,9 +7,8 @@
 class ComputerPlayer : public Player {
 	public:
 		ComputerPlayer(std::string name);
-		std::tuple<Card, Card> discardToCrib();
-		Card playCard(int score);
-		
+		std::vector<Card> discardCards();
+		Card playCard(int score, int max);		
 };
 
 #endif /* COMPUTERPLAYER_H */

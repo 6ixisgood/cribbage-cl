@@ -7,8 +7,8 @@
 class HumanPlayer : public Player {
 	public:
 		HumanPlayer(std::string name);	
-		std::tuple<Card, Card> discardToCrib();
-		Card playCard(int count);
+		std::vector<Card> discardCards();
+		Card playCard(int count, int max);
 };
 
 #endif /* HUMANPLAYER_H */

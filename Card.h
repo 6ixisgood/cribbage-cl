@@ -1,6 +1,9 @@
 #ifndef CARD_H
 #define CARD_H
 
+#define CARD_WIDTH 5
+#define CARD_HEIGHT 5
+
 #include <string> 
 #include <map>
 #include <ncursesw/curses.h>

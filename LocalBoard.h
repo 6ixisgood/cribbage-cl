@@ -7,11 +7,9 @@ class LocalBoard : public Board {
     public:
         LocalBoard(Player * p1, Player * p2);
         void dealRound();
-        void player2InitialDiscard();
-        Card player2PlayCard(int count);
+        /**
+         * Just deal out one card locally
+         */
         void cutStarterCard();
-        void displayPlayer2Hand();
-
-
 };
 
