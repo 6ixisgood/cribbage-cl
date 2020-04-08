@@ -3,7 +3,7 @@
 #include "Card.h"
 using namespace std;
 
-Card::Card() {}
+Card::Card() : value_(0), rank_(""), suit_("") {}
 
 Card::Card(int value, string rank, string suit) : value_(value), rank_(rank), suit_(suit) {}
 

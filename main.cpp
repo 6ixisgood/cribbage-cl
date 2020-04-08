@@ -38,8 +38,8 @@ int main(int argc, char** args) {
 	// Begin playing game
 	LocalBoard lb = LocalBoard(&p1, &p2);
 	Board *b = &lb;
-	b->startGame();
-	b->startRound();
+	b->initGame();
+	b->startGameRound();
 
 	// end ncurses
 	sleep(10);

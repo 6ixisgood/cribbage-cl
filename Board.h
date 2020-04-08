@@ -83,27 +83,23 @@ class Board {
 		WINDOW * logWindow_;	// window displays logs of what is going on in the game 
 	public:
 		Board(Player * p1, Player * p2);
-		void startGame();
-		void startRound();
+		virtual void initGame();
+		virtual void startGameRound();
 		virtual void dealRound() = 0;
-		void initialDiscard();	
-		void emptyCrib();		
+		virtual void initialDiscard() = 0;	
 		virtual void cutStarterCard() = 0;
-		void displayHelpWindow();
 		void startPlay();
-		void checkWin();
-		int playRound(unsigned short int turn);
+		virtual int checkWin();
+		virtual int playRound(unsigned short int turn) = 0;
 		void checkPlayCardsScoring(unsigned short int turn, int count);
-		void countHandScores();
+		virtual void countHandScores();
 		int getHandScore(std::vector<Card> hand, std::string playerName);
 		void displayHand(WINDOW * win, std::vector<Card> cards);
 		void combinationUtil(std::vector<std::vector<Card>> &combinations, std::vector<Card> cards, 
 				Card data[], int start, int end, int index, int r);
 		void getCombinations(std::vector<Card> cards);
-		void updatePlayer1InfoWindow(std::string s);
-		void updatePlayer2InfoWindow(std::string s);
-		void updateScoreWindow();
-		void updateLogWindow(std::string s);
+		virtual void updateLog(std::string s);
+		
 };
 
 #endif /* BOARD_H */
