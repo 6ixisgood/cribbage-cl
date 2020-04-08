@@ -430,14 +430,14 @@ void Board::checkPlayCardsScoring(unsigned short int turn, int count) {
 					int highest = sortedCards[position].sortValue();
 					bool straight = true;
 					int i = 1;
-					for(position--; position>0; i++, position--) {
+					for(position--; position>=0; i++, position--) {
 						if (sortedCards[position].sortValue() != highest-i) {
 							straight = false;
 							break;
 						}
 					}
 					if (straight) {
-						int length = i + 1;
+						int length = i;
 						updateLogWindow(players_[turn]->name() + " scored " + 
 							to_string(length) + " for a straight");
 						players_[turn]->advancePosition(length);
