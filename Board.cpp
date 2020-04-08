@@ -79,10 +79,11 @@ void Board::startRound() {
 		// switch dealer
 		dealer_ = dealer_^1;
 		// clear everything that could have cards
-		wclear(player1Window_);
-		wrefresh(player1Window_);
-		wclear(starterWindow_);
-		wrefresh(starterWindow_);
+		wclear(player1InfoWindow_);wrefresh(player1InfoWindow_);
+		wclear(player1Window_);wrefresh(player1Window_);
+		wclear(player2Window_);wrefresh(player2Window_);
+		wclear(playWindow_);wrefresh(playWindow_);
+		wclear(player2InfoWindow_);wrefresh(player2InfoWindow_);
 	}
 
 }
@@ -138,6 +139,7 @@ void Board::startPlay() {
 	wrefresh(player1Window_);
 
 	// wait for input
+	updatePlayer1InfoWindow("Press <G> to advance");
 	bool input = false;
 	while (1) {
 		switch (toupper(getch())) {
@@ -165,8 +167,9 @@ int Board::playRound(unsigned short int turn) {
 	bool go[2] = { false, false };
 	int count = 0;
 	while (count < MAX_ROUND_SCORE) {
-		// check to see if both players have said "GO"
-		if (go[0] && go[1]) {
+		// check to see if both players have said "GO" or both are out of cards
+		if ((go[0] && go[1]) || 
+			(player1_->isPlayHandEmpty() && player2_->isPlayHandEmpty())) {
 			break;
 		}
 		// check to see if player has alread said "GO" and skip if so
@@ -336,11 +339,12 @@ void Board::countHandScores() {
 	}
 
 	// clear the player's and computer's hand
-	wclear(player1Window_);
-	wclear(playWindow_);
-	wrefresh(playWindow_);
-	wclear(player2InfoWindow_);
-	wrefresh(player2InfoWindow_);
+	wclear(player1InfoWindow_);wrefresh(player1InfoWindow_);
+	wclear(player1Window_);wrefresh(player1Window_);
+	wclear(player2Window_);wrefresh(player2Window_);
+	wclear(playWindow_);wrefresh(playWindow_);
+	wclear(player2InfoWindow_);wrefresh(player2InfoWindow_);
+
 	// display the crib and get score
 	players_[dealer_]->displayHand(crib_);
 	wrefresh(player1Window_);
