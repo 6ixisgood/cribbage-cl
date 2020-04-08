@@ -82,32 +82,8 @@ void Board::startRound() {
 
 }
 
-void Board::dealRound() {
-	// clear out player's hands and crib
-	player1_->emptyHand();
-	player1_->emptyPlayHand();
-	player2_->emptyHand();
-	player2_->emptyPlayHand();
-	crib_.clear();
-
-	// give 6 cards to each player
-	for (int i=1; i<=6; i++) {
-		assert(!deck_.isEmpty());
-		player1_->addToHand(deck_.dealOne());
-		assert(!deck_.isEmpty());
-		player2_->addToHand(deck_.dealOne());
-	}
-	assert(player1_->hand().size() == 6);
-	assert(player2_->hand().size() == 6);
-}
 
 void Board::initialDiscard() {
-	// have computer auto discard
-	auto computerDiscard = player2_->discardToCrib();
-	// add cards to crib
-	crib_.push_back(get<0>(computerDiscard));
-	crib_.push_back(get<1>(computerDiscard));
-
 	// display all player cards and allow to choose which to discard
 	this->displayHand(playerWindow_, player1_->hand());
 	int cursorPosition = 0;
@@ -183,6 +159,9 @@ void Board::initialDiscard() {
 			break;
 		}
 	}
+
+	// have player 2 discard their cards
+	this->player2InitialDiscard();
 }
 
 void Board::startPlay() {
@@ -250,9 +229,10 @@ int Board::playRound(unsigned short int turn) {
 		}
 		// default "GO" card
 		Card c = Card(0, "GO", "");
-		// if it's the computer's turn just let it go
-		if (turn == PLAYER2 && !players_[turn]->isPlayHandEmpty()) {
-			c = players_[turn]->playCard(count);
+
+		// let player 2 go if it's their turn
+		if (turn == PLAYER2) { //&& !players_[turn]->isPlayHandEmpty()) {
+			c = player2PlayCard(count);
 		} else if (!players_[turn]->isPlayHandEmpty()){
 			// for player's turn let them see their cards and select which one to use
 			bool removed = false;
@@ -430,14 +410,14 @@ void Board::checkPlayCardsScoring(unsigned short int turn, int count) {
 					int highest = sortedCards[position].sortValue();
 					bool straight = true;
 					int i = 1;
-					for(position--; position>0; i++, position--) {
+					for(position--; position>=0; i++, position--) {
 						if (sortedCards[position].sortValue() != highest-i) {
 							straight = false;
 							break;
-						}
+						} 
 					}
 					if (straight) {
-						int length = i + 1;
+						int length = i;
 						updateLogWindow(players_[turn]->name() + " scored " + 
 							to_string(length) + " for a straight");
 						players_[turn]->advancePosition(length);
@@ -456,32 +436,15 @@ void Board::checkPlayCardsScoring(unsigned short int turn, int count) {
 	}
 }
 
-void Board::cutStarterCard() {
-	// get the starter
-	starter_ = deck_.dealOne();
-
-	// 2 points for dealer if jack
-	if (starter_.suit().compare("J") == 0) {
-		updateLogWindow(players_[dealer_]->name() + " scored 2 for his heels");
-		players_[dealer_]->advancePosition(2);
-	}
-	
-	// display it in the starter window
-	starter_.displayCardAt(starterWindow_, 0, 0);
-	wrefresh(starterWindow_);
-
-
-}
-
 void Board::countHandScores() {
-	// display the player's hand and computer's hand and update scores 
+	// display the player 1 hand  
 	this->displayHand(playerWindow_, player1_->hand());
-	this->displayHand(playWindow_, player2_->hand());
-	// refresh windows
+	// refresh window
 	wrefresh(playerWindow_);
-	wrefresh(playWindow_);
+	// display player 2's hand
+	this->displayPlayer2Hand();
 
-	// calculate scores
+	// calculate scores locally
 	int scores[2];
 	scores[PLAYER1] = getHandScore(player1_->hand(), player1_->name());
 	scores[PLAYER2] = getHandScore(player2_->hand(), player2_->name());
@@ -492,7 +455,7 @@ void Board::countHandScores() {
 	updateInfoWindow2(player2_->name() + "'s hand scored " + 
 		to_string(scores[PLAYER2]));
 	
-	// add score of non-dealer first and see if they won
+	// add score of non-dealer first and see if they won, locally
 	players_[dealer_^1]->advancePosition(scores[dealer_^1]);
 	updateLogWindow(players_[dealer_^1]->name() + "'s hand scored " + 
 		to_string(scores[dealer_^1]));

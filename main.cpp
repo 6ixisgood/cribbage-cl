@@ -9,7 +9,7 @@
 #include <iostream>
 #include "Card.h"
 #include "Deck.h"
-#include "Board.h"
+#include "LocalBoard.h"
 #include "bmp.h"
 #include "splash.xbm"
 
@@ -36,9 +36,10 @@ int main(int argc, char** args) {
 	HumanPlayer p1 = HumanPlayer("You");
 	ComputerPlayer p2 = ComputerPlayer("Computer");
 	// Begin playing game
-	Board b = Board(&p1, &p2);
-	b.startGame();
-	b.startRound();
+	LocalBoard lb = LocalBoard(&p1, &p2);
+	Board *b = &lb;
+	b->startGame();
+	b->startRound();
 
 	// end ncurses
 	sleep(10);

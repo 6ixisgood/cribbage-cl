@@ -51,7 +51,7 @@
 #include "ComputerPlayer.h"
 
 class Board {
-	private: 
+	protected: 
 		// players
 		Player * player1_;
 		Player * player2_;
@@ -75,11 +75,11 @@ class Board {
 		Board(Player * p1, Player * p2);
 		void startGame();
 		void startRound();
-		void dealRound();
+		virtual void dealRound() = 0;
 		void initialDiscard();	
 		void addToCrib(Card c);
 		void emptyCrib();		
-		void cutStarterCard();
+		virtual void cutStarterCard() = 0;
 		void displayHelpWindow();
 		void startPlay();
 		void checkWin();
@@ -95,6 +95,10 @@ class Board {
 		void updateInfoWindow2(std::string s);
 		void updateScoreWindow();
 		void updateLogWindow(std::string s);
+
+		virtual void player2InitialDiscard() = 0;
+		virtual Card player2PlayCard(int count) = 0;
+		virtual void displayPlayer2Hand() = 0;
 };
 
 #endif /* BOARD_H */
