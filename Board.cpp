@@ -2,7 +2,6 @@
 #include <iostream>
 #include <algorithm>
 #include <numeric>
-#include <ncursesw/curses.h>
 #include <unistd.h>
 #include "Board.h"
 #include "ComputerPlayer.h"
@@ -15,15 +14,15 @@ Board::Board(Player * p1, Player *p2) {
 	player1_ = p1;
 	player2_ = p2;
 	players_ = {player1_, player2_};
-}
-
-void Board::initGame() {
 	// create deck 
-	deck_ = Deck();
+	Deck d;
+	deck_ = d;
 	// set dealer
 	dealer_ = PLAYER1;
-	gameNumber_ = 1;		
+	gameNumber_ = 1;
 }
+
+
 
 void Board::startGameRound() {
 	int winningScore = WINNING_SCORE_SHORT;
@@ -31,7 +30,7 @@ void Board::startGameRound() {
 		player2_->position() < winningScore) {
 		// reshuffle deck
 		deck_.reshuffle();
-		// deal the cards to each player
+		// deal the cards to each player 
 		this->dealRound();
 		// start the 2 card discard
 		this->initialDiscard();
@@ -155,7 +154,6 @@ void Board::countHandScores() {
 	this->checkWin();
 
 	// do the crib
-	players_[dealer_]->displayHand(crib_);
 	int cribHand = getHandScore(crib_, CRIB);
 
 	// add the crib's points to the dealer's
@@ -179,7 +177,8 @@ int Board::getHandScore(vector<Card> cards, string playerName) {
 	int score = 0;
 	// handle 5 card flush case
 	bool fiveCardFlush = false;
-	// go in reverse to get 5 card first
+	bool scoredStraight = false;
+	// go in reverse to get 5 card first for straights/flushes
 	for (vector<vector<Card>>::reverse_iterator it = allCombos.rbegin(); it != allCombos.rend(); ++it) {
 		vector<Card> comb = (*it);
 		int length = comb.size();
@@ -194,7 +193,7 @@ int Board::getHandScore(vector<Card> cards, string playerName) {
 		// check for nobs
 		if (length == 1) {
 			Card c = comb[0];
-			if ((c.rank().compare("J") == 0) && (c.suit().compare(starter_.suit()) == 0)) {
+			if ((c.rank().compare("J") == 0) && (c.suit().compare((starter_).suit()) == 0)) {
 				//cout << "nobs for 1\n";
 				score += 1;
 			}
@@ -207,19 +206,19 @@ int Board::getHandScore(vector<Card> cards, string playerName) {
 		}
 
 		// check for runs
-		if (length >= 3) {
+		if (length >= 3 && !scoredStraight) {
 			bool straight = true;
 			Card last = comb[comb.size()-1];
 			int i=comb.size()-1;
 			while (i--) {
-				if (comb[i].sortValue()-1 != last.sortValue()) {
+				if (comb[i].sortValue()+1 != last.sortValue()) {
 					straight = false;
 					break;
 				}
 				last = comb[i];
 			}
 			if (straight) {
-				//cout << "straight for 3\n";
+				scoredStraight = true;
 				score += length;
 			}
 		}
@@ -246,7 +245,7 @@ int Board::getHandScore(vector<Card> cards, string playerName) {
 				while (i--) {
 					// if starter is in here, it doesn't count
 					if (comb[i].suit() != suit ||
-						comb[i] == starter_) {
+						comb[i] == (starter_)) {
 						flush = false;
 						break;
 					}

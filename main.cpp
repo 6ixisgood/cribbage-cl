@@ -10,7 +10,9 @@
 #include "Card.h"
 #include "Deck.h"
 #include "LocalBoard.h"
-#include "bmp.h"
+#include "HumanPlayer.h"
+#include "ComputerPlayer.h"
+#include "nutils.h"
 #include "splash.xbm"
 
 using namespace std;
@@ -38,7 +40,6 @@ int main(int argc, char** args) {
 	// Begin playing game
 	LocalBoard lb = LocalBoard(&p1, &p2);
 	Board *b = &lb;
-	b->initGame();
 	b->startGameRound();
 
 	// end ncurses

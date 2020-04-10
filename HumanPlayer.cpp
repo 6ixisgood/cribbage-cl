@@ -6,8 +6,7 @@
 
 using namespace std;
 
-HumanPlayer::HumanPlayer(string name) : Player(name) {}
-
+HumanPlayer::HumanPlayer(string name) : NPlayer(name) {}
 
 vector<Card> HumanPlayer::discardCards() {
 	// display player's hand

@@ -2,9 +2,9 @@
 #define COMPUTERPLAYER_H
 
 #include <string>
-#include "Player.h"
+#include "NPlayer.h"
 
-class ComputerPlayer : public Player {
+class ComputerPlayer : public NPlayer {
 	public:
 		ComputerPlayer(std::string name);
 		std::vector<Card> discardCards();

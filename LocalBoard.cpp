@@ -1,9 +1,13 @@
 #include <assert.h>
 #include "LocalBoard.h"
+#include "nutils.h"
 
 using namespace std;
 
-LocalBoard::LocalBoard(Player * p1, Player *p2) : Board(p1, p2) {
+LocalBoard::LocalBoard(NPlayer * p1, NPlayer *p2) : Board(p1, p2) {
+	// create players
+	nplayer1_ = p1;
+	nplayer2_ = p2;
 	// set up the windows 
 	int max_x, max_y;
 	getmaxyx(stdscr, max_y, max_x);
@@ -27,13 +31,10 @@ LocalBoard::LocalBoard(Player * p1, Player *p2) : Board(p1, p2) {
 		SCORE_WINDOW_Y, SCORE_WINDOW_X);
 	helpWindow_ = newwin(1, max_x, max_y-1, 0);
 
-	player1_->setPlayerWindow(player1Window_);
-	player2_->setPlayerWindow(player2Window_);
-}
+	nplayer1_->setPlayerWindow(player1Window_);
+	nplayer2_->setPlayerWindow(player2Window_);
 
-void LocalBoard::initGame() {
-	Board::initGame();
-	// update helper window
+	//update helper window
 	this->displayHelpWindow();
 }
 
@@ -53,6 +54,8 @@ void LocalBoard::startGameRound() {
 		this->cutStarterCard();
 		// start the play
 		this->startPlay();	
+		// wrap up the play
+		this->endPlay();
 		// start the counting
 		this->countHandScores();
 		// switch dealer
@@ -85,7 +88,7 @@ void LocalBoard::dealRound() {
 	assert(player2_->hand().size() == 6);
 
 	// add an empty card to starter window to look like the deck (to be flipped)
-	Card().displayCardAt(starterWindow_, 0, 0);
+	displayCardAt(starterWindow_, Card(), 0, 0);
 	wrefresh(starterWindow_);
 }
 
@@ -94,7 +97,7 @@ void LocalBoard::initialDiscard() {
 	// display blank cards
 	Card b = Card(0, " ", " ");
 	vector<Card> blanks {b, b, b, b, b, b};
-	player2_->displayHand(blanks);
+	this->displayHand(player2Window_, blanks);
 	// ask each player to discard 2 cards
 	vector<Card> p1Discard = players_[0]->discardCards();
 	vector<Card> p2Discard = players_[1]->discardCards();
@@ -122,7 +125,7 @@ void LocalBoard::cutStarterCard() {
 	}
 	
 	// display it in the starter window
-	starter_.displayCardAt(starterWindow_, 0, 0);
+	displayCardAt(starterWindow_, starter_, 0, 0);
 	wrefresh(starterWindow_);
 }
 
@@ -132,7 +135,7 @@ int LocalBoard::playRound(unsigned short int turn) {
 
 	updatePlayer1InfoWindow("Select a card to play");
 	// display all player cards and allow to choose which to play
-	player1_->displayHand(player1_->playHand());
+	this->displayHand(player1Window_, player1_->playHand());
 	// display all blanks for player2
 	Card b = Card(0, " ", " ");
 	vector<Card> blanks {b, b, b, b};
@@ -166,7 +169,7 @@ int LocalBoard::playRound(unsigned short int turn) {
 			// display card played
 			int disp_x = PLAY_WINDOW_PLAYER1_X;
 			if (turn == PLAYER2) disp_x = PLAY_WINDOW_PLAYER2_X;
-			c.displayCardAt(playWindow_, disp_x, 0);
+			displayCardAt(playWindow_, c, disp_x, 0);
 			// display current count
 			mvwprintw(playWindow_, CARD_HEIGHT,
 				PLAY_WINDOW_PLAYER1_X-3, "%d", count);
@@ -218,9 +221,9 @@ void LocalBoard::endPlay() {
 
 void LocalBoard::countHandScores() {
 	// display the player 1 hand  
-	player1_->displayHand(player1_->hand());
+	this->displayHand(player1Window_, player1_->hand());
 	// display player 2's hand
-	player2_->displayHand(player2_->hand());
+	this->displayHand(player2Window_, player2_->hand());
 	// calculate scores locally
 	int scores[2];
 	scores[PLAYER1] = getHandScore(player1_->hand(), player1_->name());
@@ -269,7 +272,11 @@ void LocalBoard::countHandScores() {
 	wclear(player2InfoWindow_);wrefresh(player2InfoWindow_);
 
 	// display the crib and get score
-	players_[dealer_]->displayHand(crib_);
+	if (dealer_ == PLAYER1) {
+		this->displayHand(player1Window_, crib_);
+	} else {
+		this->displayHand(player2Window_, crib_);
+	}
 	wrefresh(player1Window_);
 	int cribHand = getHandScore(crib_, CRIB);
 
@@ -301,18 +308,6 @@ void LocalBoard::countHandScores() {
 		if (input) break;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 void LocalBoard::displayHelpWindow() {
 	wattron(helpWindow_, COLOR_WHITE | A_BOLD);
@@ -360,4 +355,14 @@ int LocalBoard::checkWin() {
 		exit(0);
 	}
 	return winner;
+}
+
+void LocalBoard::displayHand(WINDOW * win, vector<Card> cards) {
+	wclear(win);
+	int x = 0;
+	for(vector<Card>::iterator it = cards.begin(); it != cards.end(); ++it, x+=CARD_WIDTH+1) {
+		Card c = (*it);
+		displayCardAt(win, c, x, 0);
+	}
+	wrefresh(win);
 }

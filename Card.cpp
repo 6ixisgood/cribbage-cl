@@ -1,5 +1,4 @@
 #include <string>
-#include <ncursesw/curses.h>
 #include "Card.h"
 using namespace std;
 
@@ -30,53 +29,4 @@ Card& Card::operator=(const Card& rhs) {
 	suit_ = rhs.suit_;
 
 	return *this;
-}
-
-/**
- * Draws card in given window at given position
- */
-void Card::displayCardAt(WINDOW * win, int x, int y) {
-	// create color pairs and set
-	init_pair(2, COLOR_RED, COLOR_WHITE);
-	init_pair(3, COLOR_BLACK, COLOR_WHITE);
-	init_pair(4, COLOR_BLACK, COLOR_RED);
-	if (this->suit_.compare("H") == 0|| this->suit_.compare("D") == 0) {
-		wattron(win, COLOR_PAIR(2));
-	} else if (this->suit_.compare("C") == 0 || this->suit_.compare("S") == 0){
-		wattron(win, COLOR_PAIR(3));
-	} else {
-		wattron(win, COLOR_PAIR(4));
-	}
-
-	// draw card
-	if (value_ > 0) {
-		string space = " ";
-		if (this->toString().size() > 2) space = "";
-		mvwprintw(win, y+0, x, ""); waddch(win, ACS_ULCORNER); waddch(win, ACS_HLINE);
-			waddch(win, ACS_HLINE); waddch(win, ACS_HLINE); waddch(win, ACS_URCORNER);
-		mvwprintw(win, y+1, x, ""); waddch(win, ACS_VLINE); 
-			wprintw(win, "%s%s", this->toString().c_str(), space.c_str()); waddch(win, ACS_VLINE);
-		mvwprintw(win, y+2, x, ""); waddch(win, ACS_VLINE); 
-			wprintw(win, "   "); waddch(win, ACS_VLINE);
-		mvwprintw(win, y+3, x, ""); waddch(win, ACS_VLINE); 
-			wprintw(win, "%s%s", space.c_str(), this->toString().c_str()); waddch(win, ACS_VLINE);
-		mvwprintw(win, y+4, x, ""); waddch(win, ACS_LLCORNER); waddch(win, ACS_HLINE);
-			waddch(win, ACS_HLINE); waddch(win, ACS_HLINE); waddch(win, ACS_LRCORNER);
-	} else {
-		// draw back side of card
-		mvwprintw(win, y+0, x, "* * *");
-		mvwprintw(win, y+1, x, " * * ");
-		mvwprintw(win, y+2, x, "* * *");  
-		mvwprintw(win, y+3, x, " * * "); 
-		mvwprintw(win, y+4, x, "* * *"); 
-	}
-
-	// turn off color pair
-	if (this->suit_.compare("H") == 0|| this->suit_.compare("D") == 0) {
-		wattroff(win, COLOR_PAIR(2));
-	} else if (this->suit_.compare("C") == 0 || this->suit_.compare("S") == 0){
-		wattroff(win, COLOR_PAIR(3));
-	} else {
-		wattroff(win, COLOR_PAIR(4));
-	}
 }

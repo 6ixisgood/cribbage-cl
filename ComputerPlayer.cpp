@@ -3,7 +3,7 @@
 
 using namespace std;
 
-ComputerPlayer::ComputerPlayer(string name) : Player(name) {}
+ComputerPlayer::ComputerPlayer(string name) : NPlayer(name) {}
 
 vector<Card> ComputerPlayer::discardCards() {
 	// just take the first two cards out of the computer's hand
