@@ -2,14 +2,13 @@
 #define COMPUTERPLAYER_H
 
 #include <string>
-#include "Player.h"
+#include "NPlayer.h"
 
-class ComputerPlayer : public Player {
+class ComputerPlayer : public NPlayer {
 	public:
 		ComputerPlayer(std::string name);
-		std::tuple<Card, Card> discardToCrib();
-		Card playCard(int score);
-		
+		std::vector<Card> discardCards();
+		Card playCard(int score, int max);		
 };
 
 #endif /* COMPUTERPLAYER_H */

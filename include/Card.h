@@ -1,11 +1,14 @@
 #ifndef CARD_H
 #define CARD_H
 
+#define CARD_WIDTH 5
+#define CARD_HEIGHT 5
+
 #include <string> 
 #include <map>
-#include <ncursesw/curses.h>
+
 class Card {
-	private: 
+	protected: 
 		int value_;
 		std::string rank_;
 		std::string suit_;
@@ -28,8 +31,6 @@ class Card {
 		bool operator==(const Card& rhs) const;
 		Card& operator=(const Card& rhs);
 		bool operator<(const Card& rhs) { return this->sortValue() < rhs.sortValue(); }
-		// ncurses stuff
-		void displayCardAt(WINDOW * win, int x, int y);
 };
 
 #endif /* CARD_H */

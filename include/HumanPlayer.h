@@ -2,13 +2,13 @@
 #define HUMANPLAYER_H
 
 #include <string>
-#include "Player.h"
+#include "NPlayer.h"
 
-class HumanPlayer : public Player {
+class HumanPlayer : public NPlayer {
 	public:
 		HumanPlayer(std::string name);	
-		std::tuple<Card, Card> discardToCrib();
-		Card playCard(int count);
+		std::vector<Card> discardCards();
+		Card playCard(int count, int max);
 };
 
 #endif /* HUMANPLAYER_H */

@@ -6,7 +6,7 @@
 #include <stack>
 #include <vector>
 class Deck {
-	private:
+	protected:
 		std::vector<Card> cards_ { Card(1, "A", "H"), Card(2, "2", "H"), Card(3, "3", "H"), Card(4, "4", "H"), Card(5, "5", "H"), 
 							Card(6, "6", "H"), Card(7, "7", "H"), Card(8, "8", "H"), Card(9, "9", "H"), Card(10, "10", "H"),
 							Card(10, "J", "H"), Card(10, "Q", "H"), Card(10, "K", "H"), 
@@ -24,9 +24,7 @@ class Deck {
 	public:
 		Card dealOne();
 		void reshuffle();
-		bool isEmpty();
-
-		
+		bool isEmpty();	
 };
 
 #endif /* DECK_H */

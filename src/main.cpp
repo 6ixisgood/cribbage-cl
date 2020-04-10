@@ -9,8 +9,10 @@
 #include <iostream>
 #include "Card.h"
 #include "Deck.h"
-#include "Board.h"
-#include "bmp.h"
+#include "LocalBoard.h"
+#include "HumanPlayer.h"
+#include "ComputerPlayer.h"
+#include "nutils.h"
 #include "splash.xbm"
 
 using namespace std;
@@ -36,9 +38,9 @@ int main(int argc, char** args) {
 	HumanPlayer p1 = HumanPlayer("You");
 	ComputerPlayer p2 = ComputerPlayer("Computer");
 	// Begin playing game
-	Board b = Board(&p1, &p2);
-	b.startGame();
-	b.startRound();
+	LocalBoard lb = LocalBoard(&p1, &p2);
+	Board *b = &lb;
+	b->startGameRound();
 
 	// end ncurses
 	sleep(10);

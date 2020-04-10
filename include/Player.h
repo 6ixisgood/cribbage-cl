@@ -7,7 +7,7 @@
 #include "Card.h"
 
 class Player {
-	private:
+	protected:
 		std::string name_;
 		std::vector<Card> hand_;
 		std::vector<Card> playHand_;
@@ -29,10 +29,8 @@ class Player {
 		void addToHand(Card c);
 		void removeFromHand(Card c);
 		void removeFromPlayHand(Card c);
-		void printHand();
-		void printPlayHand();
-		virtual std::tuple<Card, Card> discardToCrib() = 0;
-		virtual Card playCard(int count) = 0;
+		virtual std::vector<Card> discardCards() = 0;
+		virtual Card playCard(int count, int max) = 0;
 
 };
 

@@ -30,26 +30,8 @@ void Player::removeFromHand(Card c) {
 
 }
 
-void Player::printHand() {
-	std::cout << "Your Hand: ";
-	int j=1;
-	for (std::vector<Card>::iterator i = hand_.begin(); i != hand_.end(); ++i, j++) {
-		std::cout << "[" << j << "]" << i->toString() << " ";
-	}
-	std::cout << "\n";
-}
-
 void Player::setPlayHand(vector<Card> cards) {
 	playHand_ = cards;
-}
-
-void Player::printPlayHand() {
-	std::cout << "Your Play Hand: ";
-	int j=1;
-	for (std::vector<Card>::iterator i = playHand_.begin(); i != playHand_.end(); ++i, j++) {
-		std::cout << "[" << j << "]" << i->toString() << " ";
-	}
-	std::cout << "\n";
 }
 
 bool Player::isPlayHandEmpty() {
@@ -79,6 +61,7 @@ Card Player::getCardInHandAt(int index) {
 Card Player::getCardInPlayHandAt(int index) {
 	return playHand_[index];
 }
+
 
  
 
